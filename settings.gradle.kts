@@ -12,6 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-rootProject.name = "ProxyChecker-Telegram"
+rootProject.name = "ProxyChecker"
 include(":app")
