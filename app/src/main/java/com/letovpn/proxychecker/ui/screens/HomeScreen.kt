@@ -13,8 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.Proxy
-import com.letovpn.proxychecker.model.ProxySource
 import com.letovpn.proxychecker.model.ProxyStatus
+import com.letovpn.proxychecker.model.ProxyType
 import com.letovpn.proxychecker.ui.viewmodel.ProxyViewModel
 import com.letovpn.proxychecker.ui.viewmodel.SettingsViewModel
 
@@ -35,11 +35,13 @@ fun HomeScreen(
                 title = { Text("Proxy Checker") },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, "Add")
+                    IconButton(onClick = {
+                        viewModel.addTestProxies()
+                    }) {
+                        Icon(Icons.Default.Add, "Add test")
                     }
-                    IconButton(onClick = { viewModel.fetchFromSources() }) {
-                        Icon(Icons.Default.CloudDownload, "Fetch")
+                    IconButton(onClick = { viewModel.clearProxies() }) {
+                        Icon(Icons.Default.Delete, "Clear")
                     }
                     IconButton(onClick = { navController.navigate("settings") }) {
                         Icon(Icons.Default.Settings, "Settings")
@@ -65,7 +67,7 @@ fun HomeScreen(
                     Spacer(Modifier.height(16.dp))
                     Text("No proxies", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(4.dp))
-                    Text("Tap + to add, then fetch", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Tap + to add test proxies", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -75,33 +77,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
-
-    if (showAddDialog) {
-        var name by remember { mutableStateOf("") }
-        var url by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showAddDialog = false },
-            title = { Text("Add source") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (name.isNotBlank() && url.isNotBlank()) {
-                            viewModel.addSource(ProxySource(name = name, url = url))
-                            viewModel.fetchFromSources()
-                            showAddDialog = false
-                        }
-                    }
-                ) { Text("Add") }
-            },
-            dismissButton = { TextButton(onClick = { showAddDialog = false }) { Text("Cancel") } }
-        )
     }
 }
 
