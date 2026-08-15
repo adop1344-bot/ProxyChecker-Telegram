@@ -20,3 +20,7 @@ Android приложение для проверки прокси с подде�
 ## GitHub Actions
 
 Автоматическая сборка и релиз при пуше тегов `v*`.
+
+## Статус сборки
+
+[![Build Status](https://github.com/adop1344-bot/ProxyChecker-Telegram/actions/workflows/release.yml/badge.svg)](https://github.com/adop1344-bot/ProxyChecker-Telegram/actions/workflows/release.yml)
