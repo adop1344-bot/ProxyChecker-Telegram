@@ -19,8 +19,12 @@ jobs:
         distribution: 'temurin'
     - name: Generate Gradle Wrapper
       run: |
+        mkdir -p /tmp/gradle-init
+        cd /tmp/gradle-init
         gradle wrapper --gradle-version=8.5
-        chmod +x gradlew
+        cp gradlew gradlew.bat /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/
+        cp -r gradle/wrapper /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/gradle/
+        chmod +x /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/gradlew
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon
     - name: Upload Artifact
