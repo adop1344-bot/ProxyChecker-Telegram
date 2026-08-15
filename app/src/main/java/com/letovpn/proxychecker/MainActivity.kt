@@ -4,9 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,17 +26,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val settingsViewModel: SettingsViewModel = viewModel()
-            val proxyViewModel: ProxyViewModel = viewModel()
-            val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+            val settingsVM: SettingsViewModel = viewModel()
+            val proxyVM: ProxyViewModel = viewModel()
+            val isDarkTheme by settingsVM.isDarkTheme.collectAsState()
             ProxyCheckerTheme(darkTheme = isDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val navController = rememberNavController()
-                    NavHost(
-                        navController = nav
-                    ) {
-Controller,ViewModel, }
-"settings) }sources { SourcesScreen(navController, proxyViewModel) }
+                    val nav = rememberNavController()
+                    NavHost(navController = nav, startDestination = "home") {
+                        composable("home") { HomeScreen(nav, proxyVM, settingsVM) }
+                        composable("settings") { SettingsScreen(nav, settingsVM) }
+                        composable("sources") { SourcesScreen(nav, proxyVM) }
                     }
                 }
             }
