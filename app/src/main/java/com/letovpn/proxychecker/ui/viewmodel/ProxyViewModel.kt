@@ -36,7 +36,8 @@ class ProxyViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadDefaultSources() {
         _sources.value = listOf(
             ProxySource(name = "ProxyScrape SOCKS5", url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all", type = SourceType.TEXT),
-            ProxySource(name = "ProxyScrape SOCKS4", url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country.TEXTn ProxySource(name url "https:///?=http&country=all", type = SourceType.TEXT)
+            ProxySource(name = "ProxyScrape SOCKS4", url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all", type = SourceType.TEXT),
+            ProxySource(name = "ProxyScrape HTTP", url = "https://api.proxyscrape.com/v2/?request=get&protocol=http&timeout=10000&country=all", type = SourceType.TEXT)
         )
     }
 
