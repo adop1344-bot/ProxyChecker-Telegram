@@ -23,7 +23,7 @@ data class Proxy(
             ProxyType.MTProto -> "tg://proxy?server=$host&port=$port"
         }
     }
-    
+
     fun toDisplayString(): String {
         val auth = if (!username.isNullOrEmpty()) "$username:***@" else ""
         return "$auth$host:$port"
@@ -34,7 +34,9 @@ enum class ProxyType { SOCKS5, SOCKS4, HTTP, MTProto }
 enum class ProxyStatus { UNKNOWN, TESTING, WORKING, DEAD }
 
 data class ProxySource(
-    val id: String = System.currentTime Stringn    val url:,
+    val id: String = System.currentTimeMillis().toString(),
+    val name: String,
+    val url: String,
     val type: SourceType = SourceType.TEXT,
     val isEnabled: Boolean = true,
     val lastFetch: Long = 0,
