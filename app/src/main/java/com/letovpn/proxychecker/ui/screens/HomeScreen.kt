@@ -56,21 +56,22 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (isChecking) {
                 LinearProgressIndicator(
                     progress = { if (checkTotal > 0) checkProgress.toFloat() / checkTotal else 0f },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
 
             if (proxies.isEmpty()) {
+                // Empty state
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.height(16.dp))
                         Text("No proxies yet", style = MaterialTheme.typography.titleMedium)
-                        Text("Add sources or paste proxies", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Tap + to add sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.fetchFromSources() }) {
                             Icon(Icons.Default.CloudDownload, contentDescription = null)
@@ -80,7 +81,11 @@ fun HomeScreen(
                     }
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(proxies, key = { it.id }) { proxy ->
                         ProxyCard(proxy = proxy, viewModel = viewModel)
                     }

@@ -95,22 +95,23 @@ fun AddSourceDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(SourceType.TEXT) }
+    var selectedType by remember { mutableStateOf(0) } // index
+    val types = listOf(SourceType.TEXT, SourceType.JSON, SourceType.API)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add proxy source") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
 
                 Text("Source type", style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SourceType.entries.forEach { type ->
+                    types.forEachIndexed { index, type ->
                         FilterChip(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type },
+                            selected = selectedType == index,
+                            onClick = { selectedType = index },
                             label = { Text(type.name) }
                         )
                     }
@@ -118,9 +119,10 @@ fun AddSourceDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (name.isNotBlank() && url.isNotBlank()) onAdd(name, url, selectedType) }, enabled = name.isNotBlank() && url.isNotBlank()) {
-                Text("Add")
-            }
+            TextButton(
+                onClick = { if (name.isNotBlank() && url.isNotBlank()) onAdd(name, url, types[selectedType]) },
+                enabled = name.isNotBlank() && url.isNotBlank()
+            ) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

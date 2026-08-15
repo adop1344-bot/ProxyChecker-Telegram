@@ -72,15 +72,15 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel) {
             HorizontalDivider()
             Text("Telegram", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
-            // Telegram channel
-            OutlinedTextField(
-                value = telegramChannel,
-                onValueChange = { viewModel.setTelegramChannel(it) },
-                label = { Text("Telegram channel") },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            // Telegram channel - just display, not editable
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Our channel", style = MaterialTheme.typography.bodyLarge)
+                    Text(telegramChannel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
 
             // Open channel button
             OutlinedButton(
