@@ -1,10 +1,8 @@
-name: Build and Release APK
+name: Build APK
 
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -17,39 +15,24 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Generate Gradle Wrapper
+    - name: Setup Gradle
       run: |
-        mkdir -p /tmp/gradle-init
-        cd /tmp/gradle-init
-        echo 'rootProject.name = "temp"' > settings.gradle
+        mkdir -p /tmp/init
+        cd /tmp/init
+        echo "rootProject.name = \"t\"" > settings.gradle
         gradle wrapper --gradle-version=8.9
         cp gradlew gradlew.bat $GITHUB_WORKSPACE/
         mkdir -p $GITHUB_WORKSPACE/gradle/wrapper
         cp gradle/wrapper/gradle-wrapper.jar $GITHUB_WORKSPACE/gradle/wrapper/
         cp gradle/wrapper/gradle-wrapper.properties $GITHUB_WORKSPACE/gradle/wrapper/
         chmod +x $GITHUB_WORKSPACE/gradlew
-    - name: Create debug keystore
-      run: |
         mkdir -p ~/.android
-        keytool -genkeypair -v -keystore ~/.android/debug.keystore \
-          -storepass android -keypass android -keyalg RSA -keysize 2048 \
-          -validity 10000 -dname "CN=Android Debug,O=Android,C=US" \
-          -alias androiddebugkey 2>/dev/null || true
-    - name: Build Release APK
+        keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android,O=Android,C=US" -alias androiddebugkey 2>/dev/null || true
+    - name: Build
       run: ./gradlew assembleRelease --no-daemon
-    - name: Upload Artifact
+    - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: proxy-checker-apk
+        name: proxy-checker
         path: app/build/outputs/apk/release/*.apk
         retention-days: 30
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: app/build/outputs/apk/release/*.apk
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
