@@ -21,16 +21,20 @@ jobs:
       run: |
         mkdir -p /tmp/gradle-init
         cd /tmp/gradle-init
-        # Create minimal settings.gradle so gradle wrapper works
         echo 'rootProject.name = "temp"' > settings.gradle
-        # Generate wrapper with desired version
         gradle wrapper --gradle-version=8.9
-        # Copy to workspace
         cp gradlew gradlew.bat $GITHUB_WORKSPACE/
         mkdir -p $GITHUB_WORKSPACE/gradle/wrapper
         cp gradle/wrapper/gradle-wrapper.jar $GITHUB_WORKSPACE/gradle/wrapper/
         cp gradle/wrapper/gradle-wrapper.properties $GITHUB_WORKSPACE/gradle/wrapper/
         chmod +x $GITHUB_WORKSPACE/gradlew
+    - name: Create debug keystore
+      run: |
+        mkdir -p ~/.android
+        keytool -genkeypair -v -keystore ~/.android/debug.keystore \
+          -storepass android -keypass android -keyalg RSA -keysize 2048 \
+          -validity 10000 -dname "CN=Android Debug,O=Android,C=US" \
+          -alias androiddebugkey 2>/dev/null || true
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon
     - name: Upload Artifact
