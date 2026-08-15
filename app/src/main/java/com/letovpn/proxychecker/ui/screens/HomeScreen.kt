@@ -1,7 +1,5 @@
 package com.letovpn.proxychecker.ui.screens
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,8 +26,6 @@ fun HomeScreen(
 ) {
     val proxies by viewModel.proxies.collectAsState()
     val isChecking by viewModel.isChecking.collectAsState()
-    val checkProgress by viewModel.checkProgress.collectAsState()
-    val checkTotal by viewModel.checkTotal.collectAsState()
 
     Scaffold(
         topBar = {
@@ -48,46 +44,30 @@ fun HomeScreen(
         },
         floatingActionButton = {
             if (proxies.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.checkAllProxies() },
-                    icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
-                    text = { Text(if (isChecking) "$checkProgress/$checkTotal" else "Check All") }
-                )
+                FloatingActionButton(onClick = { viewModel.checkAllProxies() }) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Check")
+                }
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (isChecking) {
-                LinearProgressIndicator(
-                    progress = { if (checkTotal > 0) checkProgress.toFloat() / checkTotal else 0f },
-                    modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
-
             if (proxies.isEmpty()) {
-                // Empty state
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Public, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.height(16.dp))
-                        Text("No proxies yet", style = MaterialTheme.typography.titleMedium)
-                        Text("Tap + to add sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedButton(onClick = { viewModel.fetchFromSources() }) {
-                            Icon(Icons.Default.CloudDownload, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Fetch from sources")
-                        }
+                        Text("No proxies", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(4.dp))
+                        Text("Add sources to get started", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                LazyColumn(contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(proxies, key = { it.id }) { proxy ->
-                        ProxyCard(proxy = proxy, viewModel = viewModel)
+                        ProxyCard(proxy)
                     }
                 }
             }
@@ -96,36 +76,19 @@ fun HomeScreen(
 }
 
 @Composable
-fun ProxyCard(proxy: Proxy, viewModel: ProxyViewModel) {
-    val statusColor by animateColorAsState(
-        targetValue = when (proxy.status) {
-            ProxyStatus.WORKING -> MaterialTheme.colorScheme.primary
-            ProxyStatus.DEAD -> MaterialTheme.colorScheme.error
-            ProxyStatus.TESTING -> MaterialTheme.colorScheme.tertiary
-            ProxyStatus.UNKNOWN -> MaterialTheme.colorScheme.outline
-        },
-        animationSpec = tween(300), label = "status"
-    )
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { viewModel.openInTelegram(proxy) }
-    ) {
+fun ProxyCard(proxy: Proxy) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(Modifier.weight(1f)) {
                 Text(proxy.toDisplayString(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(proxy.type.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (proxy.country != null) {
-                        Text(proxy.country, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (proxy.latency > 0) {
-                        Text("${proxy.latency}ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    if (proxy.country != null) Text(proxy.country!!, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (proxy.latency > 0) Text("${proxy.latency}ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Surface(shape = MaterialTheme.shapes.small, color = statusColor, modifier = Modifier.size(12.dp)) {}
+            Surface(shape = MaterialTheme.shapes.small, color = if (proxy.status == ProxyStatus.WORKING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, modifier = Modifier.size(12.dp)) {}
         }
     }
 }

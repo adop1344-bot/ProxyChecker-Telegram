@@ -7,8 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,16 +36,10 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
                     NavHost(
-                        navController = navController,
-                        startDestination = "home",
-                        enterTransition = { fadeIn(animationSpec = tween(300)) + slideInHorizontally(animationSpec = tween(300)) { it } },
-                        exitTransition = { fadeOut(animationSpec = tween(300)) + slideOutHorizontally(animationSpec = tween(300)) { it } },
-                        popEnterTransition = { fadeIn(animationSpec = tween(300)) + slideInHorizontally(animationSpec = tween(300)) { -it } },
-                        popExitTransition = { fadeOut(animationSpec = tween(300)) + slideOutHorizontally(animationSpec = tween(300)) { -it } }
+                        navController = nav
                     ) {
-                        composable("home") { HomeScreen(navController = navController, viewModel = proxyViewModel, settingsViewModel = settingsViewModel) }
-                        composable("settings") { SettingsScreen(navController = navController, viewModel = settingsViewModel) }
-                        composable("sources") { SourcesScreen(navController = navController, viewModel = proxyViewModel) }
+Controller,ViewModel, }
+"settings) }sources { SourcesScreen(navController, proxyViewModel) }
                     }
                 }
             }

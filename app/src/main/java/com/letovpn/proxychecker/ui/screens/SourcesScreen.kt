@@ -25,33 +25,24 @@ fun SourcesScreen(navController: NavController, viewModel: ProxyViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Proxy Sources") },
-                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+                title = { Text("Sources") },
+                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 actions = {
-                    IconButton(onClick = { showDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add source")
-                    }
-                    IconButton(onClick = { viewModel.fetchFromSources() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Fetch all")
-                    }
+                    IconButton(onClick = { showDialog = true }) { Icon(Icons.Default.Add, "Add") }
+                    IconButton(onClick = { viewModel.fetchFromSources() }) { Icon(Icons.Default.Refresh, "Refresh") }
                 }
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(sources, key = { it.id }) { source ->
-                SourceCard(source = source, viewModel = viewModel)
+                SourceCard(source, viewModel)
             }
-
             if (sources.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text("No sources added. Tap + to add one.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text("No sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -59,10 +50,10 @@ fun SourcesScreen(navController: NavController, viewModel: ProxyViewModel) {
     }
 
     if (showDialog) {
-        AddSourceDialog(
+        SimpleAddDialog(
             onDismiss = { showDialog = false },
-            onAdd = { name, url, type ->
-                viewModel.addSource(ProxySource(name = name, url = url, type = type))
+            onAdd = { name, url ->
+                viewModel.addSource(ProxySource(name = name, url = url))
                 showDialog = false
             }
         )
@@ -71,59 +62,35 @@ fun SourcesScreen(navController: NavController, viewModel: ProxyViewModel) {
 
 @Composable
 fun SourceCard(source: ProxySource, viewModel: ProxyViewModel) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
+    Card(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
                 Text(source.name, style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(4.dp))
                 Text(source.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                Text("Type: ${source.type.name}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(checked = source.isEnabled, onCheckedChange = { viewModel.toggleSource(source) })
-            Spacer(Modifier.width(8.dp))
             IconButton(onClick = { viewModel.removeSource(source) }) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
             }
         }
     }
 }
 
 @Composable
-fun AddSourceDialog(
-    onDismiss: () -> Unit,
-    onAdd: (String, String, SourceType) -> Unit
-) {
+fun SimpleAddDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(0) } // index
-    val types = listOf(SourceType.TEXT, SourceType.JSON, SourceType.API)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add proxy source") },
+        title = { Text("Add source") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-
-                Text("Source type", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    types.forEachIndexed { index, type ->
-                        FilterChip(
-                            selected = selectedType == index,
-                            onClick = { selectedType = index },
-                            label = { Text(type.name) }
-                        )
-                    }
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, Modifier.fillMaxWidth())
+                OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, Modifier.fillMaxWidth())
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = { if (name.isNotBlank() && url.isNotBlank()) onAdd(name, url, types[selectedType]) },
-                enabled = name.isNotBlank() && url.isNotBlank()
-            ) { Text("Add") }
-        },
+        confirmButton = { TextButton(onClick = { onAdd(name, url) }, enabled = name.isNotBlank() && url.isNotBlank()) { Text("Add") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
