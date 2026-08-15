@@ -34,8 +34,7 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel) {
         }
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
-            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("Appearance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -78,7 +77,7 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel) {
                 value = telegramChannel,
                 onValueChange = { viewModel.setTelegramChannel(it) },
                 label = { Text("Telegram channel") },
-                leadingIcon = { Icon(Icons.Default.Telegram, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
