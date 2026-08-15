@@ -20,13 +20,18 @@ jobs:
     - name: Setup Gradle Wrapper
       run: |
         mkdir -p gradle/wrapper
-        # Download gradle-wrapper.jar from official Gradle distribution
-        curl -sL "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -o /tmp/gradle-8.9-bin.zip
-        unzip -q -o /tmp/gradle-8.9-bin.zip -d /tmp/gradle-extract
-        cp /tmp/gradle-extract/gradle-8.9/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || \
-        cp /tmp/gradle-extract/gradle-8.9/lib/gradle-base-services-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || true
-        # If jar not found, generate it differently
-        ls /tmp/gradle-extract/gradle-8.9/lib/ | head -20
+        # Download gradle-wrapper.jar from official Gradle GitHub
+        curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+        # Update gradle-wrapper.properties for 8.9
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
         chmod +x gradlew
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon
