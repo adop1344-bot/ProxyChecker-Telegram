@@ -21,10 +21,11 @@ jobs:
       run: |
         mkdir -p /tmp/gradle-init
         cd /tmp/gradle-init
-        gradle wrapper --gradle-version=8.5
-        cp gradlew gradlew.bat /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/
-        cp -r gradle/wrapper /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/gradle/
-        chmod +x /home/runner/work/ProxyChecker-Telegram/ProxyChecker-Telegram/gradlew
+        gradle wrapper --gradle-version=8.9
+        cp gradlew gradlew.bat $GITHUB_WORKSPACE/
+        mkdir -p $GITHUB_WORKSPACE/gradle/wrapper
+        cp -r gradle/wrapper/* $GITHUB_WORKSPACE/gradle/wrapper/
+        chmod +x $GITHUB_WORKSPACE/gradlew
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon
     - name: Upload Artifact
