@@ -21,26 +21,24 @@ fun HomeScreen(
 ) {
     val proxies by viewModel.proxies.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Simple top bar
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Proxy Checker", style = MaterialTheme.typography.titleLarge)
-            Row {
-                IconButton(onClick = { navController.navigate("sources") }) {
-                    Icon(Icons.Default.Add, "Add")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Proxy Checker") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                actions = {
+                    IconButton(onClick = { navController.navigate("sources") }) {
+                        Icon(Icons.Default.Add, "Add")
+                    }
+                    IconButton(onClick = { navController.navigate("settings") }) {
+                        Icon(Icons.Default.Settings, "Settings")
+                    }
                 }
-                IconButton(onClick = { navController.navigate("settings") }) {
-                    Icon(Icons.Default.Settings, "Settings")
-                }
-            }
+            )
         }
-
+    ) { padding ->
         if (proxies.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Public, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))

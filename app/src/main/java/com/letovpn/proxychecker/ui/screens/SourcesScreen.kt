@@ -15,39 +15,31 @@ import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.ProxySource
 import com.letovpn.proxychecker.ui.viewmodel.ProxyViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SourcesScreen(navController: NavController, viewModel: ProxyViewModel) {
     val sources by viewModel.sources.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Sources") },
+                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                actions = {
+                    IconButton(onClick = { showDialog = true }) { Icon(Icons.Default.Add, "Add") }
+                    IconButton(onClick = { viewModel.fetchFromSources() }) { Icon(Icons.Default.Refresh, "Refresh") }
                 }
-                Text("Sources", style = MaterialTheme.typography.titleLarge)
-            }
-            Row {
-                IconButton(onClick = { showDialog = true }) {
-                    Icon(Icons.Default.Add, "Add source")
-                }
-                IconButton(onClick = { viewModel.fetchFromSources() }) {
-                    Icon(Icons.Default.Refresh, "Refresh")
-                }
-            }
+            )
         }
-
+    ) { padding ->
         if (sources.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text("No sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(sources, key = { it.id }) { source ->
                     Card(Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
