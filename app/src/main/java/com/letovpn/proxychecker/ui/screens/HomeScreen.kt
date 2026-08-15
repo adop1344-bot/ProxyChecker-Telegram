@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.letovpn.proxychecker.model.ProxySource
 import com.letovpn.proxychecker.ui.viewmodel.ProxyViewModel
 import com.letovpn.proxychecker.ui.viewmodel.SettingsViewModel
 
@@ -20,6 +21,7 @@ fun HomeScreen(
     settingsViewModel: SettingsViewModel
 ) {
     val proxies by viewModel.proxies.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -27,7 +29,7 @@ fun HomeScreen(
                 title = { Text("Proxy Checker") },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 actions = {
-                    IconButton(onClick = { navController.navigate("sources") }) {
+                    IconButton(onClick = { showAddDialog = true }) {
                         Icon(Icons.Default.Add, "Add")
                     }
                     IconButton(onClick = { navController.navigate("settings") }) {
@@ -48,5 +50,31 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    if (showAddDialog) {
+        var name by remember { mutableStateOf("") }
+        var url by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("Add source") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (name.isNotBlank() && url.isNotBlank()) {
+                            viewModel.addSource(ProxySource(name = name, url = url))
+                            showAddDialog = false
+                        }
+                    }
+                ) { Text("Add") }
+            },
+            dismissButton = { TextButton(onClick = { showAddDialog = false }) { Text("Cancel") } }
+        )
     }
 }

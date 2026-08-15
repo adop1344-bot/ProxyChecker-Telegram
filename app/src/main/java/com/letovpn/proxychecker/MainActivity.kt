@@ -15,7 +15,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.letovpn.proxychecker.ui.screens.HomeScreen
 import com.letovpn.proxychecker.ui.screens.SettingsScreen
-import com.letovpn.proxychecker.ui.screens.SourcesScreen
 import com.letovpn.proxychecker.ui.theme.ProxyCheckerTheme
 import com.letovpn.proxychecker.ui.viewmodel.ProxyViewModel
 import com.letovpn.proxychecker.ui.viewmodel.SettingsViewModel
@@ -33,7 +32,6 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController = nav, startDestination = "home") {
                         composable("home") { HomeScreen(nav, proxyVM, settingsVM) }
                         composable("settings") { SettingsScreen(nav, settingsVM) }
-                        composable("sources") { SourcesScreen(nav, proxyVM) }
                     }
                 }
             }
