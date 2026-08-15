@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.ProxySource
-import com.letovpn.proxychecker.model.SourceType
 import com.letovpn.proxychecker.ui.viewmodel.ProxyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,11 +85,28 @@ fun SimpleAddDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
         title = { Text("Add source") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, Modifier.fillMaxWidth())
-                OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("URL") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
-        confirmButton = { TextButton(onClick = { onAdd(name, url) }, enabled = name.isNotBlank() && url.isNotBlank()) { Text("Add") } },
+        confirmButton = {
+            TextButton(
+                onClick = { onAdd(name, url) },
+                enabled = name.isNotBlank() && url.isNotBlank()
+            ) { Text("Add") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

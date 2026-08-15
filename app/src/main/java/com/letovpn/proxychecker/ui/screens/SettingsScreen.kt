@@ -19,6 +19,7 @@ import com.letovpn.proxychecker.ui.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -50,10 +51,9 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel) {
 
             OutlinedButton(
                 onClick = {
-                    val ctx = context
-                    ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/letovpn_free")))
+                    context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/letovpn_free")))
                 },
-                Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.OpenInNew, null)
                 Spacer(Modifier.width(8.dp))
