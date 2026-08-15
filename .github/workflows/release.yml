@@ -17,15 +17,17 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Generate Gradle Wrapper
+    - name: Setup Gradle Wrapper
       run: |
-        mkdir -p /tmp/gradle-init
-        cd /tmp/gradle-init
-        gradle wrapper --gradle-version=8.9
-        cp gradlew gradlew.bat $GITHUB_WORKSPACE/
-        mkdir -p $GITHUB_WORKSPACE/gradle/wrapper
-        cp -r gradle/wrapper/* $GITHUB_WORKSPACE/gradle/wrapper/
-        chmod +x $GITHUB_WORKSPACE/gradlew
+        mkdir -p gradle/wrapper
+        # Download gradle-wrapper.jar from official Gradle distribution
+        curl -sL "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -o /tmp/gradle-8.9-bin.zip
+        unzip -q -o /tmp/gradle-8.9-bin.zip -d /tmp/gradle-extract
+        cp /tmp/gradle-extract/gradle-8.9/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || \
+        cp /tmp/gradle-extract/gradle-8.9/lib/gradle-base-services-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || true
+        # If jar not found, generate it differently
+        ls /tmp/gradle-extract/gradle-8.9/lib/ | head -20
+        chmod +x gradlew
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon
     - name: Upload Artifact
