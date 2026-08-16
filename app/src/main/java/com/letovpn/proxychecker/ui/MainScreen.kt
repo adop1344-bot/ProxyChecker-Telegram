@@ -26,13 +26,52 @@ fun MainScreen(navController: NavController) {
     var isChecking by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var showSrc by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf("") }
 
     // Предустановленные источники
     val sources = listOf(
-        "MTPro.xyz" to "https://mtpro.xyz/api/?type=mtp",
         "Proxy.org RU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_ru.txt",
         "Proxy.org EU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_eu.txt"
     )
+
+    fun parseProxyText(text: String): List<ProxyItem> {
+        return text.lines()
+            .filter { it.isNotBlank() && !it.startsWith("#") }
+            .mapNotNull { line ->
+                try {
+                    val trimmed = line.trim()
+                    when {
+                        // tg://proxy?server=...&port=...&secret=...
+                        trimmed.startsWith("tg://proxy?") -> {
+                            val params = trimmed.substringAfter("?").split("&")
+                            var server = ""; var port = 0; var secret = ""
+                            params.forEach { p ->
+                                val kv = p.split("=", limit = 2)
+                                if (kv.size == 2) {
+                                    when (kv[0]) {
+                                        "server" -> server = kv[1]
+                                        "port" -> port = kv[1].toIntOrNull() ?: 0
+                                        "secret" -> secret = kv[1]
+                                    }
+                                }
+                            }
+                            if (server.isNotBlank() && port > 0) ProxyItem(host = server, port = port, secret = secret) else null
+                        }
+                        // ip:port
+                        trimmed.contains(":") && !trimmed.contains("/") -> {
+                            val parts = trimmed.split(":")
+                            if (parts.size >= 2) {
+                                val host = parts[0]
+                                val port = parts[1].toIntOrNull()
+                                val secret = if (parts.size >= 3) parts[2] else ""
+                                if (host.isNotBlank() && port != null && port > 0) ProxyItem(host = host, port = port, secret = secret) else null
+                            } else null
+                        }
+                        else -> null
+                    }
+                } catch (e: Exception) { null }
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -41,7 +80,7 @@ fun MainScreen(navController: NavController) {
                 colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primaryContainer),
                 actions = {
                     IconButton(onClick = { showSrc = true }) { Icon(Icons.Default.Add, "Add") }
-                    IconButton(onClick = { items = emptyList() }) { Icon(Icons.Default.Delete, "Clear") }
+                    IconButton(onClick = { items = emptyList(); errorMsg = "" }) { Icon(Icons.Default.Delete, "Clear") }
                     IconButton(onClick = { navController.navigate("settings") }) { Icon(Icons.Default.Settings, "Settings") }
                 }
             )
@@ -65,6 +104,10 @@ fun MainScreen(navController: NavController) {
             LinearProgressIndicator(Modifier.fillMaxWidth().padding(p))
         }
 
+        if (errorMsg.isNotBlank()) {
+            Text(errorMsg, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(p).padding(16.dp))
+        }
+
         if (items.isEmpty() && !isLoading) {
             Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -72,30 +115,22 @@ fun MainScreen(navController: NavController) {
                     Spacer(Modifier.height(16.dp))
                     Text("No MTProxy", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(4.dp))
-                    Text("Choose a source below to get started", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Choose a source below", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(24.dp))
 
-                    // Кнопки источников
                     sources.forEach { (name, url) ->
                         OutlinedButton(
                             onClick = {
                                 isLoading = true
+                                errorMsg = ""
                                 scope.launch {
                                     try {
                                         val text = java.net.URL(url).readText()
-                                        val parsed = text.lines()
-                                            .filter { it.isNotBlank() }
-                                            .mapNotNull { line ->
-                                                try {
-                                                    val parts = line.trim().split(":")
-                                                    if (parts.size >= 2) {
-                                                        ProxyItem(host = parts[0], port = parts[1].toInt())
-                                                    } else null
-                                                } catch (e: Exception) { null }
-                                            }
+                                        val parsed = parseProxyText(text)
                                         items = parsed
+                                        if (parsed.isEmpty()) errorMsg = "No proxies found in source"
                                     } catch (e: Exception) {
-                                        // ошибка загрузки
+                                        errorMsg = "Failed to load: ${e.message}"
                                     }
                                     isLoading = false
                                 }
@@ -154,7 +189,8 @@ fun MainScreen(navController: NavController) {
             title = { Text("Custom source URL") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter URL with proxy list (ip:port per line):", style = MaterialTheme.typography.bodySmall)
+                    Text("Enter URL with proxy list:", style = MaterialTheme.typography.bodySmall)
+                    Text("Supports formats: tg://proxy?server=...&port=...&secret=... OR ip:port", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 }
             },
@@ -163,19 +199,16 @@ fun MainScreen(navController: NavController) {
                     if (url.isNotBlank()) {
                         showSrc = false
                         isLoading = true
+                        errorMsg = ""
                         scope.launch {
                             try {
                                 val text = java.net.URL(url).readText()
-                                val parsed = text.lines()
-                                    .filter { it.isNotBlank() }
-                                    .mapNotNull { line ->
-                                        try {
-                                            val parts = line.trim().split(":")
-                                            if (parts.size >= 2) ProxyItem(host = parts[0], port = parts[1].toInt()) else null
-                                        } catch (e: Exception) { null }
-                                    }
+                                val parsed = parseProxyText(text)
                                 items = items + parsed
-                            } catch (e: Exception) { }
+                                if (parsed.isEmpty()) errorMsg = "No proxies found"
+                            } catch (e: Exception) {
+                                errorMsg = "Error: ${e.message}"
+                            }
                             isLoading = false
                         }
                     }
