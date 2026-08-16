@@ -52,6 +52,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    // TDLib for accurate proxy checking
-    implementation("com.github.tdlight-team:tdlight:4.0.2")
+    // TDLib for MTProto proxy checking
+    implementation("com.github.tdlight-team:tdlight:3.0.5")
 }
