@@ -28,6 +28,9 @@ jobs:
         chmod +x $GITHUB_WORKSPACE/gradlew
         mkdir -p ~/.android
         keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android,O=Android,C=US" -alias androiddebugkey 2>/dev/null || true
+    - name: Install NDK
+      run: |
+        echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;27.0.12077973" 2>/dev/null || true
     - name: Build
       run: ./gradlew assembleRelease --no-daemon
     - name: Upload
