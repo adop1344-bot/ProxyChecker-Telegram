@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.ProxyItem
 import com.letovpn.proxychecker.util.ProxyChecker
-import com.letovpn.proxychecker.util.SourceFetcher
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,7 +24,15 @@ fun MainScreen(navController: NavController) {
     val ctx = LocalContext.current
     var items by remember { mutableStateOf(listOf<ProxyItem>()) }
     var isChecking by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
     var showSrc by remember { mutableStateOf(false) }
+
+    // Предустановленные источники
+    val sources = listOf(
+        "MTPro.xyz" to "https://mtpro.xyz/api/?type=mtp",
+        "Proxy.org RU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_ru.txt",
+        "Proxy.org EU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_eu.txt"
+    )
 
     Scaffold(
         topBar = {
@@ -40,7 +47,7 @@ fun MainScreen(navController: NavController) {
             )
         },
         floatingActionButton = {
-            if (items.isNotEmpty()) {
+            if (items.isNotEmpty() && !isChecking) {
                 FloatingActionButton(onClick = {
                     isChecking = true
                     scope.launch {
@@ -49,19 +56,58 @@ fun MainScreen(navController: NavController) {
                         isChecking = false
                     }
                 }) {
-                    if (isChecking) Icon(Icons.Default.HourglassEmpty, "...")
-                    else Icon(Icons.Default.PlayArrow, "Check")
+                    Icon(Icons.Default.PlayArrow, "Check")
                 }
             }
         }
     ) { p ->
-        if (items.isEmpty()) {
+        if (isLoading || isChecking) {
+            LinearProgressIndicator(Modifier.fillMaxWidth().padding(p))
+        }
+
+        if (items.isEmpty() && !isLoading) {
             Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Public, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text("No MTProxy", style = MaterialTheme.typography.titleMedium)
-                    Text("Tap + to add", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Choose a source below to get started", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(24.dp))
+
+                    // Кнопки источников
+                    sources.forEach { (name, url) ->
+                        OutlinedButton(
+                            onClick = {
+                                isLoading = true
+                                scope.launch {
+                                    try {
+                                        val text = java.net.URL(url).readText()
+                                        val parsed = text.lines()
+                                            .filter { it.isNotBlank() }
+                                            .mapNotNull { line ->
+                                                try {
+                                                    val parts = line.trim().split(":")
+                                                    if (parts.size >= 2) {
+                                                        ProxyItem(host = parts[0], port = parts[1].toInt())
+                                                    } else null
+                                                } catch (e: Exception) { null }
+                                            }
+                                        items = parsed
+                                    } catch (e: Exception) {
+                                        // ошибка загрузки
+                                    }
+                                    isLoading = false
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 4.dp),
+                            enabled = !isLoading
+                        ) {
+                            Icon(Icons.Default.CloudDownload, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Load from $name")
+                        }
+                    }
                 }
             }
         } else {
@@ -105,27 +151,35 @@ fun MainScreen(navController: NavController) {
         var url by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showSrc = false },
-            title = { Text("Add MTProxy source") },
+            title = { Text("Custom source URL") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Enter URL with proxy list (ip:port per line):", style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    Text("Or paste single proxy (ip:port):", style = MaterialTheme.typography.bodySmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { url = "https://mtpro.xyz/api/?type=mtp" }) { Text("MTPro.xyz") }
-                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (url.isNotBlank()) {
                         showSrc = false
+                        isLoading = true
                         scope.launch {
-                            val fetched = SourceFetcher.fetchFromUrl(url)
-                            items = items + fetched
+                            try {
+                                val text = java.net.URL(url).readText()
+                                val parsed = text.lines()
+                                    .filter { it.isNotBlank() }
+                                    .mapNotNull { line ->
+                                        try {
+                                            val parts = line.trim().split(":")
+                                            if (parts.size >= 2) ProxyItem(host = parts[0], port = parts[1].toInt()) else null
+                                        } catch (e: Exception) { null }
+                                    }
+                                items = items + parsed
+                            } catch (e: Exception) { }
+                            isLoading = false
                         }
                     }
-                }) { Text("Fetch") }
+                }) { Text("Load") }
             },
             dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") } }
         )
