@@ -67,11 +67,14 @@ fun MainScreen(navController: NavController) {
         } else {
             LazyColumn(Modifier.fillMaxSize().padding(p), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(items, key = { it.id }) { proxy ->
-                    Card(Modifier.fillMaxWidth(), onClick = {
-                        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(proxy.toTelegramUrl()))
-                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        ctx.startActivity(i)
-                    }) {
+                    Card(
+                        onClick = {
+                            val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(proxy.toTelegramUrl()))
+                            i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            ctx.startActivity(i)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(proxy.display(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
@@ -109,12 +112,8 @@ fun MainScreen(navController: NavController) {
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     Text("Or use quick add:", style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = {
-                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all"
-                        }) { Text("SOCKS5") }
-                        OutlinedButton(onClick = {
-                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all"
-                        }) { Text("SOCKS4") }
+                        OutlinedButton(onClick = { url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all" }) { Text("SOCKS5") }
+                        OutlinedButton(onClick = { url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all" }) { Text("SOCKS4") }
                     }
                 }
             },
