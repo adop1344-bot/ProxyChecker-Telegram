@@ -15,43 +15,37 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.ProxyItem
 import com.letovpn.proxychecker.util.ProxyChecker
+import com.letovpn.proxychecker.util.SourceFetcher
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var proxies by remember { mutableStateOf(listOf<ProxyItem>()) }
+    val ctx = LocalContext.current
+    var items by remember { mutableStateOf(listOf<ProxyItem>()) }
     var isChecking by remember { mutableStateOf(false) }
+    var showSrc by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Proxy Checker") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primaryContainer),
                 actions = {
-                    IconButton(onClick = {
-                        val p = listOf(
-                            ProxyItem(host = "185.199.108.154", port = 1080, country = "USA"),
-                            ProxyItem(host = "45.67.89.10", port = 1080, country = "Netherlands"),
-                            ProxyItem(host = "103.45.67.89", port = 4153, country = "Singapore"),
-                            ProxyItem(host = "192.168.1.1", port = 3128, type = "HTTP", country = "Germany")
-                        )
-                        proxies = proxies + p
-                    }) { Icon(Icons.Default.Add, "Add") }
-                    IconButton(onClick = { proxies = emptyList() }) { Icon(Icons.Default.Delete, "Clear") }
+                    IconButton(onClick = { showSrc = true }) { Icon(Icons.Default.Add, "Add") }
+                    IconButton(onClick = { items = emptyList() }) { Icon(Icons.Default.Delete, "Clear") }
                     IconButton(onClick = { navController.navigate("settings") }) { Icon(Icons.Default.Settings, "Settings") }
                 }
             )
         },
         floatingActionButton = {
-            if (proxies.isNotEmpty()) {
+            if (items.isNotEmpty()) {
                 FloatingActionButton(onClick = {
                     isChecking = true
                     scope.launch {
-                        proxies = proxies.map { it.copy(isTesting = true) }
-                        proxies = ProxyChecker.checkMany(proxies)
+                        items = items.map { it.copy(isTesting = true) }
+                        items = ProxyChecker.checkAll(items)
                         isChecking = false
                     }
                 }) {
@@ -60,42 +54,82 @@ fun MainScreen(navController: NavController) {
                 }
             }
         }
-    ) { padding ->
-        if (proxies.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+    ) { p ->
+        if (items.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Public, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text("No proxies", style = MaterialTheme.typography.titleMedium)
-                    Text("Tap + to add test proxies", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Tap + to add sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(proxies, key = { it.id }) { p ->
+            LazyColumn(Modifier.fillMaxSize().padding(p), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(items, key = { it.id }) { proxy ->
                     Card(Modifier.fillMaxWidth(), onClick = {
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(p.toTelegramUrl()))
-                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(intent)
+                        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(proxy.toTelegramUrl()))
+                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        ctx.startActivity(i)
                     }) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text(p.display(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                                Text(proxy.display(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                                Spacer(Modifier.height(4.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(p.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    if (p.country.isNotBlank()) Text(p.country, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    if (p.latency > 0) Text("${p.latency}ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(proxy.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (proxy.country.isNotBlank()) Text(proxy.country, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (proxy.latency > 0) Text("${proxy.latency}ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            if (p.isTesting) {
+                            if (proxy.isTesting) {
                                 CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                             } else {
-                                Surface(shape = MaterialTheme.shapes.small, color = if (p.isWorking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, modifier = Modifier.size(12.dp)) {}
+                                Surface(
+                                    shape = MaterialTheme.shapes.small,
+                                    color = if (proxy.isWorking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                    modifier = Modifier.size(12.dp)
+                                ) {}
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showSrc) {
+        var url by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showSrc = false },
+            title = { Text("Add proxy source") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Enter URL with proxy list (ip:port per line):", style = MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Text("Or use quick add:", style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = {
+                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all"
+                        }) { Text("SOCKS5") }
+                        OutlinedButton(onClick = {
+                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all"
+                        }) { Text("SOCKS4") }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (url.isNotBlank()) {
+                        showSrc = false
+                        scope.launch {
+                            val fetched = SourceFetcher.fetchFromUrl(url)
+                            items = items + fetched
+                        }
+                    }
+                }) { Text("Fetch") }
+            },
+            dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") } }
+        )
     }
 }

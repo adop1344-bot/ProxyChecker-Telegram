@@ -19,9 +19,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AppTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val nav = rememberNavController()
-                    NavHost(navController = nav, startDestination = "main") {
+                    NavHost(nav, "main") {
                         composable("main") { MainScreen(nav) }
                         composable("settings") { SettingsScreen(nav) }
                     }
