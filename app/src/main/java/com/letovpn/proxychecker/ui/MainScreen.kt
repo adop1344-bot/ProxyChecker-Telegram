@@ -77,6 +77,10 @@ fun MainScreen(navController: NavController) {
         parseProxyText(text)
     }
 
+    fun sortByPing(proxies: List<ProxyItem>): List<ProxyItem> {
+        return proxies.sortedBy { if (it.isWorking) it.latency else Long.MAX_VALUE }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -84,6 +88,7 @@ fun MainScreen(navController: NavController) {
                 colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primaryContainer),
                 actions = {
                     IconButton(onClick = { showSrc = true }) { Icon(Icons.Default.Add, "Add") }
+                    IconButton(onClick = { items = sortByPing(items) }) { Icon(Icons.Default.Sort, "Sort") }
                     IconButton(onClick = { items = emptyList(); errorMsg = "" }) { Icon(Icons.Default.Delete, "Clear") }
                     IconButton(onClick = { navController.navigate("settings") }) { Icon(Icons.Default.Settings, "Settings") }
                 }
@@ -95,7 +100,7 @@ fun MainScreen(navController: NavController) {
                     isChecking = true
                     scope.launch(Dispatchers.IO) {
                         items = items.map { it.copy(isTesting = true) }
-                        items = ProxyChecker.checkAll(items)
+                        items = sortByPing(ProxyChecker.checkAll(items))
                         isChecking = false
                     }
                 }) {
