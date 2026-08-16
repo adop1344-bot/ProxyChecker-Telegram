@@ -2,16 +2,13 @@ package com.letovpn.proxychecker.util
 
 import com.letovpn.proxychecker.model.ProxyItem
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import java.net.URL
 
 object SourceFetcher {
 
     suspend fun fetchFromUrl(url: String): List<ProxyItem> = withContext(Dispatchers.IO) {
         try {
-            val text = URL(url).readText()
+            val text = java.net.URL(url).readText()
             text.lines()
                 .filter { it.isNotBlank() }
                 .mapNotNull { line ->

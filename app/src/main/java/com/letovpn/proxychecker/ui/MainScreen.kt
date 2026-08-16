@@ -30,7 +30,7 @@ fun MainScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Proxy Checker") },
+                title = { Text("MTProxy Checker") },
                 colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primaryContainer),
                 actions = {
                     IconButton(onClick = { showSrc = true }) { Icon(Icons.Default.Add, "Add") }
@@ -60,8 +60,8 @@ fun MainScreen(navController: NavController) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Public, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
-                    Text("No proxies", style = MaterialTheme.typography.titleMedium)
-                    Text("Tap + to add sources", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("No MTProxy", style = MaterialTheme.typography.titleMedium)
+                    Text("Tap + to add", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -80,7 +80,7 @@ fun MainScreen(navController: NavController) {
                                 Text(proxy.display(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
                                 Spacer(Modifier.height(4.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(proxy.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("MTProto", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     if (proxy.country.isNotBlank()) Text(proxy.country, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     if (proxy.latency > 0) Text("${proxy.latency}ms", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
@@ -103,33 +103,16 @@ fun MainScreen(navController: NavController) {
 
     if (showSrc) {
         var url by remember { mutableStateOf("") }
-        var selType by remember { mutableStateOf("SOCKS5") }
-
         AlertDialog(
             onDismissRequest = { showSrc = false },
-            title = { Text("Add proxy source") },
+            title = { Text("Add MTProxy source") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Enter URL with proxy list (ip:port per line):", style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-
-                    Text("Proxy type:", style = MaterialTheme.typography.bodySmall)
+                    Text("Or paste single proxy (ip:port):", style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(selected = selType == "SOCKS5", onClick = { selType = "SOCKS5" }, label = { Text("SOCKS5") })
-                        FilterChip(selected = selType == "SOCKS4", onClick = { selType = "SOCKS4" }, label = { Text("SOCKS4") })
-                        FilterChip(selected = selType == "MTProto", onClick = { selType = "MTProto" }, label = { Text("MTProto") })
-                    }
-
-                    Text("Quick fill URL:", style = MaterialTheme.typography.bodySmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = {
-                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all"
-                            selType = "SOCKS5"
-                        }) { Text("SOCKS5") }
-                        OutlinedButton(onClick = {
-                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all"
-                            selType = "SOCKS4"
-                        }) { Text("SOCKS4") }
+                        OutlinedButton(onClick = { url = "https://mtpro.xyz/api/?type=mtp" }) { Text("MTPro.xyz") }
                     }
                 }
             },
@@ -139,13 +122,12 @@ fun MainScreen(navController: NavController) {
                         showSrc = false
                         scope.launch {
                             val fetched = SourceFetcher.fetchFromUrl(url)
-                            items = items + fetched.map { it.copy(type = selType) }
+                            items = items + fetched
                         }
                     }
                 }) { Text("Fetch") }
             },
-            dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") }
-            }
+            dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") } }
         )
     }
 }
