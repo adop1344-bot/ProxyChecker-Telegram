@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.letovpn.proxychecker.model.ProxyItem
 import com.letovpn.proxychecker.util.ProxyChecker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +30,6 @@ fun MainScreen(navController: NavController) {
     var showSrc by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf("") }
 
-    // Предустановленные источники
     val sources = listOf(
         "Proxy.org RU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_ru.txt",
         "Proxy.org EU" to "https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_eu.txt"
@@ -41,7 +42,6 @@ fun MainScreen(navController: NavController) {
                 try {
                     val trimmed = line.trim()
                     when {
-                        // tg://proxy?server=...&port=...&secret=...
                         trimmed.startsWith("tg://proxy?") -> {
                             val params = trimmed.substringAfter("?").split("&")
                             var server = ""; var port = 0; var secret = ""
@@ -57,7 +57,6 @@ fun MainScreen(navController: NavController) {
                             }
                             if (server.isNotBlank() && port > 0) ProxyItem(host = server, port = port, secret = secret) else null
                         }
-                        // ip:port
                         trimmed.contains(":") && !trimmed.contains("/") -> {
                             val parts = trimmed.split(":")
                             if (parts.size >= 2) {
@@ -71,6 +70,11 @@ fun MainScreen(navController: NavController) {
                     }
                 } catch (e: Exception) { null }
             }
+    }
+
+    suspend fun loadFromUrl(url: String): List<ProxyItem> = withContext(Dispatchers.IO) {
+        val text = java.net.URL(url).readText()
+        parseProxyText(text)
     }
 
     Scaffold(
@@ -89,7 +93,7 @@ fun MainScreen(navController: NavController) {
             if (items.isNotEmpty() && !isChecking) {
                 FloatingActionButton(onClick = {
                     isChecking = true
-                    scope.launch {
+                    scope.launch(Dispatchers.IO) {
                         items = items.map { it.copy(isTesting = true) }
                         items = ProxyChecker.checkAll(items)
                         isChecking = false
@@ -125,8 +129,7 @@ fun MainScreen(navController: NavController) {
                                 errorMsg = ""
                                 scope.launch {
                                     try {
-                                        val text = java.net.URL(url).readText()
-                                        val parsed = parseProxyText(text)
+                                        val parsed = loadFromUrl(url)
                                         items = parsed
                                         if (parsed.isEmpty()) errorMsg = "No proxies found in source"
                                     } catch (e: Exception) {
@@ -190,7 +193,7 @@ fun MainScreen(navController: NavController) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Enter URL with proxy list:", style = MaterialTheme.typography.bodySmall)
-                    Text("Supports formats: tg://proxy?server=...&port=...&secret=... OR ip:port", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Supports: tg://proxy?server=...&port=... OR ip:port", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 }
             },
@@ -202,8 +205,7 @@ fun MainScreen(navController: NavController) {
                         errorMsg = ""
                         scope.launch {
                             try {
-                                val text = java.net.URL(url).readText()
-                                val parsed = parseProxyText(text)
+                                val parsed = loadFromUrl(url)
                                 items = items + parsed
                                 if (parsed.isEmpty()) errorMsg = "No proxies found"
                             } catch (e: Exception) {
