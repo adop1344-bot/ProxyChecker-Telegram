@@ -103,6 +103,8 @@ fun MainScreen(navController: NavController) {
 
     if (showSrc) {
         var url by remember { mutableStateOf("") }
+        var selType by remember { mutableStateOf("SOCKS5") }
+
         AlertDialog(
             onDismissRequest = { showSrc = false },
             title = { Text("Add proxy source") },
@@ -110,10 +112,24 @@ fun MainScreen(navController: NavController) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Enter URL with proxy list (ip:port per line):", style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    Text("Or use quick add:", style = MaterialTheme.typography.bodySmall)
+
+                    Text("Proxy type:", style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all" }) { Text("SOCKS5") }
-                        OutlinedButton(onClick = { url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all" }) { Text("SOCKS4") }
+                        FilterChip(selected = selType == "SOCKS5", onClick = { selType = "SOCKS5" }, label = { Text("SOCKS5") })
+                        FilterChip(selected = selType == "SOCKS4", onClick = { selType = "SOCKS4" }, label = { Text("SOCKS4") })
+                        FilterChip(selected = selType == "MTProto", onClick = { selType = "MTProto" }, label = { Text("MTProto") })
+                    }
+
+                    Text("Quick fill URL:", style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = {
+                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks5&timeout=10000&country=all"
+                            selType = "SOCKS5"
+                        }) { Text("SOCKS5") }
+                        OutlinedButton(onClick = {
+                            url = "https://api.proxyscrape.com/v2/?request=get&protocol=socks4&timeout=10000&country=all"
+                            selType = "SOCKS4"
+                        }) { Text("SOCKS4") }
                     }
                 }
             },
@@ -123,12 +139,13 @@ fun MainScreen(navController: NavController) {
                         showSrc = false
                         scope.launch {
                             val fetched = SourceFetcher.fetchFromUrl(url)
-                            items = items + fetched
+                            items = items + fetched.map { it.copy(type = selType) }
                         }
                     }
                 }) { Text("Fetch") }
             },
-            dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showSrc = false }) { Text("Cancel") }
+            }
         )
     }
 }

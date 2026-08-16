@@ -10,6 +10,12 @@ data class ProxyItem(
     val isWorking: Boolean = false,
     val isTesting: Boolean = false
 ) {
-    fun toTelegramUrl(): String = "tg://socks?server=$host&port=$port"
+    fun toTelegramUrl(): String {
+        return when (type) {
+            "MTProto" -> "tg://proxy?server=$host&port=$port"
+            "HTTP" -> "tg://proxy?server=$host&port=$port"
+            else -> "tg://socks?server=$host&port=$port"
+        }
+    }
     fun display(): String = "$host:$port"
 }
